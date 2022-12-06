@@ -1,6 +1,7 @@
 // CMSC 312 Project - Part 1
 #include<queue>
 #include<vector>
+#include<fstream>
 
 // Global Variables for Memory
 extern const int MM_SIZE; // 512MB (Main Memory storage)
