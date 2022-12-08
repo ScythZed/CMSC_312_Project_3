@@ -340,3 +340,14 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 		}
 		}
 }
+
+
+
+
+
+
+
+void Scheduler::threadprint(std::string temp = "Goodbye!\n"){
+    cout << temp;
+    return;
+}

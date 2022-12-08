@@ -4,6 +4,7 @@
 #include <vector>
 #include <ctime>
 #include <algorithm>
+#include <thread>
 
 
 //#include "instruction.h"
@@ -17,6 +18,13 @@ bool enough_memory = true;
 bool MM_full = false;
 int full_mem_count = 0;
 int MM_print = 0;
+
+
+// Thread Testing
+void thread_func(){
+	cout << "Hello World\n";
+	return;
+}
 
 
 
@@ -175,6 +183,7 @@ int main(int argc, char *argv[]){
 
 	// Scheduling ***************************************************************************************************
 	Scheduler test;
+	Scheduler test2;
 	if(scheduling == 0){	// Round Robin
 		test.RoundRobin(PCB1);
 	}
@@ -183,6 +192,9 @@ int main(int argc, char *argv[]){
 		test.ShortestFirst(PCB1);
 	}
 	else if(scheduling == 2){	// Testing
+		sort(PCB1.begin(),PCB1.end(),cycle_lt);
+		thread temp_tread(&Scheduler::ShortestFirst,&test,std::ref(PCB1));
+		temp_tread.join();
 		return 0;
 	}
 	// **************************************************************************************************************
