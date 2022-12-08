@@ -5,8 +5,19 @@
 #include <ctime>
 #include <algorithm>
 
+
+//#include "instruction.h"
+#include "scheduler.h"
 using namespace std;
-#include "instruction.h"
+
+int Main_Memory[128];
+int Virtual_Memory[128];
+bool critical = false;
+bool enough_memory = true;
+bool MM_full = false;
+int full_mem_count = 0;
+int MM_print = 0;
+
 
 
 // PCB Cycle size sort (Shortest first)
@@ -28,7 +39,8 @@ int main(int argc, char *argv[]){
 	string infilestr = "input.txt";
 
 	// Process Vector
-	vector<Process> PCB;
+	vector<Process> PCB1;	// PCB for CPU 1
+	vector<Process> PCB2;	// PCB for CPU 2
 	int process_cout = 2;
 	string process_name = "Process ";
 
@@ -40,13 +52,13 @@ int main(int argc, char *argv[]){
 	bool forked = false;
 
 	// Memory
-	int Main_Memory[NUM_OF_FRAMES];
-	int Virtual_Memory[NUM_OF_FRAMES];
-	bool enough_memory = true;
-	bool in_MM = false;
-	bool MM_full = false;
-	int full_mem_count = 0;
-	int MM_print = 0;
+	// int Main_Memory[NUM_OF_FRAMES];
+	// int Virtual_Memory[NUM_OF_FRAMES];
+	// bool enough_memory = true;
+	// bool in_MM = false;
+	// bool MM_full = false;
+	// int full_mem_count = 0;
+	// int MM_print = 0;
 
 	//////////////////////////////////////////////////////////
 
@@ -65,7 +77,7 @@ int main(int argc, char *argv[]){
 	}
 	else // Too few arguments
 	{
-		cout << "\nERROR: Too many arguments.\n";
+		cout << "\nERROR: Too few arguments.\n";
 		cout << "Usage: prog1 <infile name>\n";
 		return -1;
 	}
@@ -83,7 +95,7 @@ int main(int argc, char *argv[]){
 	cout << endl;
 	cout << "Enter type of scheduler (0 = Round Robin, 1 = Shortest First): ";
 	cin >> scheduling;
-	assert(scheduling == 0 || scheduling == 1);
+	assert(scheduling == 0 || scheduling == 1 || scheduling == 2);
 	cout << "Print Main Memory during Running state? (0 = No, 1 = Yes): ";
 	cin >> MM_print;
 	assert(MM_print == 0 || MM_print == 1);
@@ -93,7 +105,7 @@ int main(int argc, char *argv[]){
 	srand(time(NULL));
 
 
-	// Loops and creates Processes to put in PCB.
+	// Loops and creates Processes to put in PCB1
 	for(int i=0;i<process_cout;i++)
 	{
 		Process Loop;
@@ -107,16 +119,40 @@ int main(int argc, char *argv[]){
 
 		// Loads all instructions from file
 		while(Loop.load(infile)){}
-		// Sets process name, state, and pushes onto PCB
+		// Sets process name, state, and pushes onto PCB1
 		Loop.SetName(process_name + to_string(i));
 		Loop.SetNameNumber(i);
 		Loop.SetState(Process::New);
 		Loop.SetCycleTotal();
 		Loop.SetPageSize();
-		PCB.push_back(Loop);
+		Loop.SetCPUNum(1);
+		PCB1.push_back(Loop);
 		infile.close();
 	}
+	// Again, but for PCB2.
+	for(int i=0;i<process_cout;i++)
+	{
+		Process Loop2;
 
+		// Opens intake file
+		infile.open(infilestr,fstream::in);
+		if(infile.is_open() == false){
+			cout << "ERROR: file " << infilestr << " can not be opened!" << endl;
+			return -1;
+		}
+
+		// Loads all instructions from file
+		while(Loop2.load(infile)){}
+		// Sets process name, state, and pushes onto PCB1
+		Loop2.SetName(process_name + to_string(i));
+		Loop2.SetNameNumber(i);
+		Loop2.SetState(Process::New);
+		Loop2.SetCycleTotal();
+		Loop2.SetPageSize();
+		Loop2.SetCPUNum(2);
+		PCB2.push_back(Loop2);
+		infile.close();
+	}
 	
 	fork_file.open("fork.txt",fstream::in);
 	if(fork_file.is_open() == false){
@@ -124,19 +160,49 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 	
-
 	// Prints processes in the PCB (Also sets PCB Process to ready)
-	for (vector<Process>::iterator it = PCB.begin(); it != PCB.end(); ++it)
+	for (vector<Process>::iterator it = PCB1.begin(); it != PCB1.end(); ++it)
 	{
 		it->print();
 		it->SetState(Process::New);
 	}
+	for (vector<Process>::iterator it = PCB2.begin(); it != PCB2.end(); ++it)
+	{
+		it->print();
+		it->SetState(Process::New);
+	}
+	
+
+	// Scheduling ***************************************************************************************************
+	Scheduler test;
+	if(scheduling == 0){	// Round Robin
+		test.RoundRobin(PCB1);
+	}
+	else if (scheduling == 1){	// Shortest First
+		sort(PCB1.begin(),PCB1.end(),cycle_lt);
+		test.ShortestFirst(PCB1);
+	}
+	else if(scheduling == 2){	// Testing
+		return 0;
+	}
+	// **************************************************************************************************************
 
 
+
+	// Printing Main Memory
+	cout << endl << "--------------------- Main Memory ---------------------" << endl;
+	cout << "Frame Number -- Page Number 	" << endl;
+	for(int i = 0; i < NUM_OF_FRAMES;i++){
+		cout << " " << i << ":	     	 " << Main_Memory[i] << endl;
+	}
+
+
+// Legacy Scheduling
+/*
 	if(scheduling == 0){	// Round Robin (/w Quantum) ***************************************************************************************************
 		vector<Process>::iterator it = PCB.begin();
 		while(PCB.size() > 0){	// While the PCB isnt empty, run.
-		in_MM = false;
+		//in_MM = false;
 
 		if(it == PCB.end()){it = PCB.begin();} // If it reaches end of PCB, Loop back to start.
 
@@ -177,11 +243,11 @@ int main(int argc, char *argv[]){
 			case Process::Ready:	// Process is on CPU ready to move to running when scheduled.
 				for(int i = 0;i < NUM_OF_FRAMES;i++){ // Loop through Main Memory to find page of current process.
 					if(it->GetPageTable(it->GetPageNum(),0) == Main_Memory[i]){
-						in_MM = true;
+						it->SetInMem(true);
 						break;
 					}
 				}
-				if(in_MM == false){ 
+				if(it->GetInMem() == false){ 
 					for(int i = 0;i < NUM_OF_FRAMES;i++){ // If its not in memory, loop to find empty page.
 						if(Main_Memory[i] == -1){
 							Main_Memory[i] = it->GetPageTable(it->GetPageNum(),0);
@@ -325,7 +391,7 @@ int main(int argc, char *argv[]){
 
 		vector<Process>::iterator it = PCB.begin();
 		while(PCB.size() > 0){	// While the PCB isnt empty, run.
-		in_MM = false;
+		//in_MM = false;
 
 		if(it == PCB.end()){it = PCB.begin();} // If it reaches end of PCB, Loop back to start.
 
@@ -366,11 +432,11 @@ int main(int argc, char *argv[]){
 			case Process::Ready:	// Process is on CPU ready to move to running when scheduled.
 				for(int i = 0;i < NUM_OF_FRAMES;i++){ // Loop through Main Memory to find page of current process.
 					if(it->GetPageTable(it->GetPageNum(),0) == Main_Memory[i]){
-						in_MM = true;
+						it->SetInMem(true);
 						break;
 					}
 				}
-				if(in_MM == false){ 
+				if(it->GetInMem() == false){ 
 					for(int i = 0;i < NUM_OF_FRAMES;i++){ // If its not in memory, loop to find empty page.
 						if(Main_Memory[i] == -1){
 							Main_Memory[i] = it->GetPageTable(it->GetPageNum(),0);
@@ -489,7 +555,7 @@ int main(int argc, char *argv[]){
 	for(int i = 0; i < NUM_OF_FRAMES;i++){
 		cout << " " << i << ":	     	 " << Main_Memory[i] << endl;
 	}
-	
+*/
 
 
 }

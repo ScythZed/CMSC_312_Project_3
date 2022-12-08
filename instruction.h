@@ -47,7 +47,7 @@ class Process: public Instruction{
 
 		void printState();
 
-		bool load(fstream& infile);
+		bool load(std::fstream& infile);
 		void print();
 		bool decrement_cycle();
 
@@ -67,6 +67,11 @@ class Process: public Instruction{
 
 		int GetPageNum();
 
+		bool GetInMem();
+		void SetInMem(bool InMem);
+
+		void SetCPUNum(int num);
+
 	private:
 		std::vector<Instruction> List; // Vector that holds all the process's instructions 
 		std::string name; // Name of the Process instance
@@ -77,5 +82,7 @@ class Process: public Instruction{
 		int page_table[128][2]; // [NUM_OF_FRAMES] - First row is for frame number. Second row is validity bit(1 or 0).
 		int page_size; // Number of instructions in the page.
 		int page_number;
+		bool in_mem;
+		int CPU_Num;
 
 };

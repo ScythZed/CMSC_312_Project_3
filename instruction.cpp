@@ -116,6 +116,7 @@ Process::Process(){
 		page_table[i][0] = 0;
 		page_table[i][1] = 0;
 	}
+	this->in_mem = false;
 	return;
 }
 
@@ -170,9 +171,7 @@ Process::State Process::GetState(){
 
 
 
-
-
-// GetState()
+// printState()
 // Summary:  process state
 // Parameters:	None
 // Return:	String equivialnt of state
@@ -252,6 +251,7 @@ bool Process::load(fstream& infile){
 // Return: None 
 void Process::print(){
 	cout << "------------------------- " << this->GetName() << " -------------------------\n";
+	cout << "------------------------   " << "CPU #" << this->CPU_Num << "    ------------------------\n";
 	for (vector<Instruction>::iterator it = List.begin(); it != List.end(); ++it)
     	it->print();
     cout << "-------------------------------------------------------------\n\n";
@@ -403,3 +403,29 @@ int Process::GetPageNum(){
 	return (this->GetPageSize() - this->GetNumOfInstr());
 }
 
+
+// GetInMem()
+// Summary: Returns if Process is in memory
+// Parameters: none
+// Return: Returns if Process is in memory
+bool Process::GetInMem(){
+	return this->in_mem;
+}
+
+
+// SetInMem()
+// Summary: Sets In Memory data member
+// Parameters: bool
+// Return: none.
+void Process::SetInMem(bool InMem){
+	this->in_mem = InMem;
+}
+
+
+// SetCPUNum()
+// Summary: Sets CPU number data member
+// Parameters: bool
+// Return: none.
+void Process::SetCPUNum(int num){
+	this->CPU_Num = num;
+}
