@@ -5,6 +5,7 @@
 #include <ctime>
 #include <algorithm>
 #include <thread>
+#include <mutex>
 
 
 //#include "instruction.h"
@@ -19,10 +20,15 @@ bool MM_full = false;
 int full_mem_count = 0;
 int MM_print = 0;
 
+std::mutex mtx;
 
 // Thread Testing
-void thread_func(){
-	cout << "Hello World\n";
+void thread_func(std::string temp = "Goodbye!\n"){
+	mtx.lock();
+	for(int i=0;i<=30;i++){
+		cout << i << " - " << temp;
+	}
+	mtx.unlock();
 	return;
 }
 
@@ -59,7 +65,7 @@ int main(int argc, char *argv[]){
 	bool critical = false;
 	bool forked = false;
 
-	// Memory
+	// Memory - All defined as Global at top of file. (Saved for Legacy)
 	// int Main_Memory[NUM_OF_FRAMES];
 	// int Virtual_Memory[NUM_OF_FRAMES];
 	// bool enough_memory = true;
@@ -103,7 +109,7 @@ int main(int argc, char *argv[]){
 	cout << endl;
 	cout << "Enter type of scheduler (0 = Round Robin, 1 = Shortest First): ";
 	cin >> scheduling;
-	assert(scheduling == 0 || scheduling == 1 || scheduling == 2);
+	//assert(scheduling == 0 || scheduling == 1 || scheduling == 2);
 	cout << "Print Main Memory during Running state? (0 = No, 1 = Yes): ";
 	cin >> MM_print;
 	assert(MM_print == 0 || MM_print == 1);
@@ -152,8 +158,8 @@ int main(int argc, char *argv[]){
 		// Loads all instructions from file
 		while(Loop2.load(infile)){}
 		// Sets process name, state, and pushes onto PCB1
-		Loop2.SetName(process_name + to_string(i));
-		Loop2.SetNameNumber(i);
+		Loop2.SetName(process_name + to_string((i + process_cout)));
+		Loop2.SetNameNumber(i + process_cout);
 		Loop2.SetState(Process::New);
 		Loop2.SetCycleTotal();
 		Loop2.SetPageSize();
@@ -193,8 +199,23 @@ int main(int argc, char *argv[]){
 	}
 	else if(scheduling == 2){	// Testing
 		sort(PCB1.begin(),PCB1.end(),cycle_lt);
-		thread temp_tread(&Scheduler::ShortestFirst,&test,std::ref(PCB1));
-		temp_tread.join();
+		sort(PCB2.begin(),PCB2.end(),cycle_lt);
+		thread temp_thread(&Scheduler::ShortestFirst,&test,std::ref(PCB1));
+		thread temp_thread2(&Scheduler::ShortestFirst,&test2,std::ref(PCB1));
+		temp_thread.join();
+		temp_thread2.join();
+		return 0;
+	}
+	else if(scheduling == 3){
+		thread temp_thread3(thread_func,"Thread 1\n");
+		thread temp_thread4(thread_func,"Thread 2\n");
+		// thread temp_thread3(&Scheduler::threadprint,&test,"Thread1");
+		// thread temp_thread4(&Scheduler::threadprint,&test2,"Thread2");
+		temp_thread3.join();
+		temp_thread4.join();
+		return 0;
+	}
+	else{
 		return 0;
 	}
 	// **************************************************************************************************************

@@ -419,13 +419,33 @@ bool Process::GetInMem(){
 // Return: none.
 void Process::SetInMem(bool InMem){
 	this->in_mem = InMem;
+	return;
 }
 
 
 // SetCPUNum()
 // Summary: Sets CPU number data member
-// Parameters: bool
+// Parameters: int
 // Return: none.
 void Process::SetCPUNum(int num){
 	this->CPU_Num = num;
+	return;
+}
+
+
+// SetThreadNum()
+// Summary: Sets the thread id of the thread that currently running the Process.
+// Parameters: bool
+// Return: none.
+void Process::SetThreadNum(int thread){
+	this->thread_number = thread;
+	return;
+}
+
+// GetInMem()
+// Summary: Gets the thread id number.
+// Parameters: none
+// Return: process_active
+int Process::GetThreadNum(){
+	return this->thread_number;
 }

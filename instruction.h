@@ -72,6 +72,9 @@ class Process: public Instruction{
 
 		void SetCPUNum(int num);
 
+		void SetThreadNum(int act);
+		int GetThreadNum();
+
 	private:
 		std::vector<Instruction> List; // Vector that holds all the process's instructions 
 		std::string name; // Name of the Process instance
@@ -84,5 +87,6 @@ class Process: public Instruction{
 		int page_number;
 		bool in_mem;
 		int CPU_Num;
+		int thread_number;
 
 };

@@ -2,6 +2,8 @@
 #include <queue>
 #include <vector>
 #include <fstream>
+#include <thread>
+#include <mutex>
 #include "instruction.h"
 
 extern int Main_Memory[128];
@@ -17,6 +19,7 @@ class Scheduler{
         int scheduling_type;
         int quantum;
         int rr_count;
+        static std::mutex mtx;
 
     public:
         Scheduler();    // Default Construtor
