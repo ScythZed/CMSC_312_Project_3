@@ -57,7 +57,8 @@ int main(int argc, char *argv[]){
 	string process_name = "Process ";
 
 	// Scheduling
-	int scheduling;	// 0 = Round Robin, 1 = Shortest First
+	int scheduling1;	// 0 = Round Robin, 1 = Shortest First
+	int scheduling2;	// 0 = Round Robin, 1 = Shortest First
 	int quantum = 5;
 	int rr_count = 0;
 	bool critical = false;
@@ -105,9 +106,12 @@ int main(int argc, char *argv[]){
 	cin >> process_cout;
 	assert(process_cout >= 0);
 	cout << endl;
-	cout << "Enter type of scheduler (0 = Round Robin, 1 = Shortest First): ";
-	cin >> scheduling;
-	//assert(scheduling == 0 || scheduling == 1 || scheduling == 2);
+	cout << "Enter type of scheduler for CPU #1 (0 = Round Robin, 1 = Shortest First): ";
+	cin >> scheduling1;
+	assert(scheduling1 == 0 || scheduling1 == 1);
+	cout << "Enter type of scheduler for CPU #2 (0 = Round Robin, 1 = Shortest First): ";
+	cin >> scheduling2;
+	assert(scheduling2 == 0 || scheduling2 == 1);
 	cout << "Print Main Memory during Running state? (0 = No, 1 = Yes): ";
 	cin >> MM_print;
 	assert(MM_print == 0 || MM_print == 1);
@@ -188,7 +192,7 @@ int main(int argc, char *argv[]){
 	// Scheduling ***************************************************************************************************
 	Scheduler test;
 	Scheduler test2;
-	if(scheduling == 0){	// Round Robin
+	if(scheduling1 == 0 ){	// Both Round Robin
 		test.RoundRobin(PCB1);
 	}
 	else if (scheduling == 1){	// Shortest First
@@ -196,10 +200,10 @@ int main(int argc, char *argv[]){
 		test.ShortestFirst(PCB1);
 	}
 	else if(scheduling == 2){	// Testing
-		sort(PCB1.begin(),PCB1.end(),cycle_lt);
-		sort(PCB2.begin(),PCB2.end(),cycle_lt);
-		thread temp_thread(&Scheduler::ShortestFirst,&test,std::ref(PCB1));
-		thread temp_thread2(&Scheduler::ShortestFirst,&test2,std::ref(PCB2));
+		// sort(PCB1.begin(),PCB1.end(),cycle_lt);
+		// sort(PCB2.begin(),PCB2.end(),cycle_lt);
+		thread temp_thread(&Scheduler::RoundRobin,&test,std::ref(PCB1));
+		thread temp_thread2(&Scheduler::RoundRobin,&test2,std::ref(PCB1));
 		temp_thread.join();
 		temp_thread2.join();
 		return 0;

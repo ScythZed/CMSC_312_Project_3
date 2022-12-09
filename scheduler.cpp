@@ -37,6 +37,14 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 	while(PCB.size() > 0){	// While the PCB isnt empty, run.
 	if(it == PCB.end()){it = PCB.begin();} // If it reaches end of PCB, Loop back to start.
 	
+	if(it->GetThreadId() == std::this_thread::get_id() || it->GetThreadId() == empty_id){
+		it->SetThreadId(std::this_thread::get_id());
+	}
+	else{
+		it++;
+		continue;
+	}
+
 
     switch(it->GetState()){
 
@@ -69,7 +77,9 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 			break;
 		}
 		it->SetState(Process::New);
+		mtx.lock();	// Mutex Print Locked ****************
 		it->printState();
+		mtx.unlock();	// Mutex Print Unlocked ****************
 		break;
 	case Process::Ready:	// Process is on CPU ready to move to running when scheduled.
 		for(int i = 0;i < NUM_OF_FRAMES;i++){ // Loop through Main Memory to find page of current process.
@@ -144,7 +154,13 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 		}
 		break;
 	case Process::Waiting:	// State for I/O is called or if waiting on child process from fork.
-		if((it->GetInstructionType()) == 0){it->SetState(Process::Ready);it->printState();break;}
+		if((it->GetInstructionType()) == 0){
+			it->SetState(Process::Ready);
+			mtx.lock();	// Mutex Print Locked ****************
+			it->printState();
+			mtx.unlock();	// Mutex Print Unlocked ****************
+			break;
+			}
 		if(it->decrement_cycle())
 		{
 			mtx.lock();	// Mutex Print Locked ****************
@@ -188,11 +204,21 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 }
 
 void Scheduler::RoundRobin(vector<Process>& PCB){
+	std::thread::id empty_id;
     vector<Process>::iterator it = PCB.begin();
 		while(PCB.size() > 0){	// While the PCB isnt empty, run.
-		//in_MM = false;
-
 		if(it == PCB.end()){it = PCB.begin();} // If it reaches end of PCB, Loop back to start.
+
+		// Multi Thread Management
+		if(it->GetThreadId() == std::this_thread::get_id() || it->GetThreadId() == empty_id){
+			it->SetThreadId(std::this_thread::get_id());
+		}
+		else{
+			if(PCB.size() == 1){return;}
+			it++;
+			continue;
+		}
+
 
 		switch(it->GetState()){
 
@@ -215,16 +241,20 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 
 				if(enough_memory){	// If there is enough virtual memory space, Set process to Ready.
 					it->SetState(Process::Ready);
+					mtx.lock();	// Mutex Print Locked ****************
 					it->printState();
 					cout << endl << "--------------------- Virtual Memory ---------------------" << endl;
 					cout << "Frame Number -- Process Number 	" << endl;
 					for(int i = 0; i < NUM_OF_FRAMES;i++){
 						cout << " " << i << ":	     	 " << Virtual_Memory[i] << endl;
 					}
+					mtx.unlock();	// Mutex Print Unlocked ****************
 					break;
 				}	// If there isnt enough, keep the process as new.
 				it->SetState(Process::New);
+				mtx.lock();	// Mutex Print Locked ****************
 				it->printState();
+				mtx.unlock();	// Mutex Print Unlocked ****************
 				break;
 
 
@@ -252,13 +282,17 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 					}
 				}
 				it->SetState(Process::Running);
+				mtx.lock();	// Mutex Print Locked ****************
 				it->printState();
+				mtx.unlock();	// Mutex Print Unlocked ****************
 				if(MM_print == 1){
+					mtx.lock();	// Mutex Print Locked ****************
 					cout << endl << "--------------------- Main Memory ---------------------" << endl;
 					cout << "Frame Number -- Page Number 	" << endl;
 					for(int i = 0; i < NUM_OF_FRAMES;i++){
 						cout << " " << i << ":	     	 " << Main_Memory[i] << endl;
 					}
+					mtx.unlock();	// Mutex Print Unlocked ****************
 				}
 				break;
 
@@ -267,7 +301,9 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 				if(it->GetInstructionType() == 1 && it->GetListSize() != 0)	// Checks if current instruction is I/O
 				{
 					it->SetState(Process::Waiting);
+					mtx.lock();	// Mutex Print Locked ****************
 					it->printState();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 					break;
 				}
 				
@@ -281,7 +317,9 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 
 				if(it->decrement_cycle())	// If its Calculate, it checks if it can decrement a cicle. If so, run as normal
 				{
+					mtx.lock();	// Mutex Print Locked ****************
 					it->print();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 					if(this->rr_count < (quantum - 1))
 					{
 						if(critical == false){this->rr_count++;}
@@ -289,8 +327,11 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 					else
 					{
 						it->SetState(Process::Ready);
+						mtx.lock();	// Mutex Print Locked ****************
 						it->printState();
+						mtx.unlock();	// Mutex Print Unlocked ****************
 						if(critical == false){
+							it->SetThreadId(empty_id);	// Resets Thread ID to empty
 							it++;
 							this->rr_count = 0;
 						}
@@ -299,12 +340,16 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 				else if(it->GetListSize() != 0)	// if decrement_cycle == false, it checks if the Process is empty. If not, set state to ready.
 				{
 					it->SetState(Process::Ready);
+					mtx.lock();	// Mutex Print Locked ****************
 					it->printState();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 				}
 				else // If the process is empty, terminate.
 				{
 					it->SetState(Process::Terminated);
+					mtx.lock();	// Mutex Print Locked ****************
 					it->printState();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 				}
 				break;
 
@@ -312,7 +357,9 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 				if((it->GetInstructionType()) == 0){it->SetState(Process::Ready);it->printState();break;}
 				if(it->decrement_cycle())
 				{
+					mtx.lock();	// Mutex Print Locked ****************
 					it->print();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 					if(this->rr_count < (quantum - 1))
 					{
 						if(critical == false){this->rr_count++;}
@@ -320,9 +367,12 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 					else
 					{
 						it->SetState(Process::Ready);
+						mtx.lock();	// Mutex Print Locked ****************
 						it->printState();
+						mtx.unlock();	// Mutex Print Unlocked ****************
 
 						if(critical == false){
+							it->SetThreadId(empty_id);	// Resets Thread ID to empty
 							it++;
 							this->rr_count = 0;
 						}
@@ -331,7 +381,9 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 				else
 				{
 					it->SetState(Process::Ready);
+					mtx.lock();	// Mutex Print Locked ****************
 					it->printState();
+					mtx.unlock();	// Mutex Print Unlocked ****************
 				}
 				break;
 
@@ -349,11 +401,13 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 						it->SetPageTable(i,1,0);
 					}
 				}
+				mtx.lock();	// Mutex Print Locked ****************
 				cout << endl << "--------------------- Virtual Memory ---------------------" << endl;
 				cout << "Frame Number -- Process Number 	" << endl;
 				for(int i = 0; i < NUM_OF_FRAMES;i++){
 					cout << " " << i << ":	     	 " << Virtual_Memory[i] << endl;
 				}
+				mtx.unlock();	// Mutex Print Unlocked ****************
 				PCB.erase(it);
 				break;
 
