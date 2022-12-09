@@ -31,10 +31,12 @@ void Scheduler::print(){
 
 
 void Scheduler::ShortestFirst(vector<Process>& PCB){
+	std::thread::id empty_id;
+	bool all_running = false;
     vector<Process>::iterator it = PCB.begin();
 	while(PCB.size() > 0){	// While the PCB isnt empty, run.
 	if(it == PCB.end()){it = PCB.begin();} // If it reaches end of PCB, Loop back to start.
-
+	
 
     switch(it->GetState()){
 
@@ -365,12 +367,16 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 
 
 
-void Scheduler::threadprint(std::string temp){
+void Scheduler::threadprint(vector<Process>& PCB){
 	mtx.lock();
-	for(int i=0;i<=30;i++){
-		cout << i << " - " <<temp;
-	}
-	mtx.unlock();
 
+	std::thread::id compare_id;
+	for (vector<Process>::iterator it = PCB.begin(); it != PCB.end(); ++it){
+		cout << it->GetName() << " - " << it->GetThreadId() << endl;
+		it->SetThreadId(std::this_thread::get_id());
+		cout << it->GetName() << " - " << it->GetThreadId() << endl;
+	}
+
+	mtx.unlock();
     return;
 }

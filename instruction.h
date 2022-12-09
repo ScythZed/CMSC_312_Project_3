@@ -2,6 +2,8 @@
 #include<queue>
 #include<vector>
 #include<fstream>
+#include <thread>
+#include <mutex>
 
 // Global Variables for Memory
 extern const int MM_SIZE; // 512MB (Main Memory storage)
@@ -72,8 +74,8 @@ class Process: public Instruction{
 
 		void SetCPUNum(int num);
 
-		void SetThreadNum(int act);
-		int GetThreadNum();
+		void SetThreadId(std::thread::id id);
+		std::thread::id GetThreadId();
 
 	private:
 		std::vector<Instruction> List; // Vector that holds all the process's instructions 
@@ -87,6 +89,6 @@ class Process: public Instruction{
 		int page_number;
 		bool in_mem;
 		int CPU_Num;
-		int thread_number;
+		std::thread::id thread_id;
 
 };

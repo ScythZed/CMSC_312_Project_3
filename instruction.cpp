@@ -433,19 +433,19 @@ void Process::SetCPUNum(int num){
 }
 
 
-// SetThreadNum()
+// SetThreadId()
 // Summary: Sets the thread id of the thread that currently running the Process.
 // Parameters: bool
 // Return: none.
-void Process::SetThreadNum(int thread){
-	this->thread_number = thread;
+void Process::SetThreadId(std::thread::id id){
+	this->thread_id = id;
 	return;
 }
 
-// GetInMem()
-// Summary: Gets the thread id number.
+// GetThreadId()
+// Summary: Gets the thread id.
 // Parameters: none
 // Return: process_active
-int Process::GetThreadNum(){
-	return this->thread_number;
+std::thread::id Process::GetThreadId(){
+	return this->thread_id;
 }

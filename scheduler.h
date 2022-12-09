@@ -27,5 +27,5 @@ class Scheduler{
         void ShortestFirst(std::vector<Process>& PCB); // Shortest First
         void RoundRobin(std::vector<Process>& PCB);  // Round Robin
 
-        void threadprint(std::string temp);
+        void threadprint(std::vector<Process>& PCB);
     };

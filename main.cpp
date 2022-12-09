@@ -25,9 +25,7 @@ std::mutex mtx;
 // Thread Testing
 void thread_func(std::string temp = "Goodbye!\n"){
 	mtx.lock();
-	for(int i=0;i<=30;i++){
-		cout << i << " - " << temp;
-	}
+	cout << "Thread ID:" << this_thread::get_id() << endl;
 	mtx.unlock();
 	return;
 }
@@ -201,16 +199,16 @@ int main(int argc, char *argv[]){
 		sort(PCB1.begin(),PCB1.end(),cycle_lt);
 		sort(PCB2.begin(),PCB2.end(),cycle_lt);
 		thread temp_thread(&Scheduler::ShortestFirst,&test,std::ref(PCB1));
-		thread temp_thread2(&Scheduler::ShortestFirst,&test2,std::ref(PCB1));
+		thread temp_thread2(&Scheduler::ShortestFirst,&test2,std::ref(PCB2));
 		temp_thread.join();
 		temp_thread2.join();
 		return 0;
 	}
 	else if(scheduling == 3){
-		thread temp_thread3(thread_func,"Thread 1\n");
-		thread temp_thread4(thread_func,"Thread 2\n");
-		// thread temp_thread3(&Scheduler::threadprint,&test,"Thread1");
-		// thread temp_thread4(&Scheduler::threadprint,&test2,"Thread2");
+		// thread temp_thread3(thread_func,"Thread 1");
+		// thread temp_thread4(thread_func,"Thread 2");
+		thread temp_thread3(&Scheduler::threadprint,&test,std::ref(PCB1));
+		thread temp_thread4(&Scheduler::threadprint,&test2,std::ref(PCB2));
 		temp_thread3.join();
 		temp_thread4.join();
 		return 0;
