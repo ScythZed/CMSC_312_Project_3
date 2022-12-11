@@ -10,8 +10,12 @@
 #include "scheduler.h"
 using namespace std;
 
+//	Global Mutex accross threads
 std::mutex Scheduler::mtx;
 
+
+//	Default Constructor
+//	Quantum: Set to 5 by default
 Scheduler::Scheduler(){
     this->scheduling_type = 0;
     this->quantum = 5;
@@ -19,7 +23,8 @@ Scheduler::Scheduler(){
 }
 
 
-
+//	Print function, that prints main memory.
+//	Used orginally as a test function.
 void Scheduler::print(){
     cout << endl << "--------------------- Main Memory ---------------------" << endl;
 	cout << "Frame Number -- Page Number 	" << endl;
@@ -29,7 +34,8 @@ void Scheduler::print(){
     return;
 }
 
-
+// Shortest first scheduler, moved from main.cpp into its own method.
+// Works the same way as done in part 2, execpt now with Mutex's
 void Scheduler::ShortestFirst(vector<Process>& PCB){
 	std::thread::id empty_id;
 	bool all_running = false;
@@ -50,6 +56,7 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 
 
 	case Process::New:	// Default state, Gets set to ready when running for the first time
+		mtx.lock();	// Mutex Memory Locked ****************
 		for(int i = 0; i < it->GetNumOfInstr(); i++){	// checks based on the number of instructions by
 			for(int j = 0; j < NUM_OF_FRAMES; j++){		// looping through Memory to see if an open spot.
 				if(Virtual_Memory[j] == -1){			// If yes, place in process number and set process to ready.
@@ -64,6 +71,7 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 				}
 			}	
 		}
+		mtx.unlock();	// Mutex Memory Locked ****************
 		if(enough_memory){
 			it->SetState(Process::Ready);
 			mtx.lock();	// Mutex Print Locked ****************
@@ -89,6 +97,7 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 			}
 		}
 		if(it->GetInMem() == false){ 
+			mtx.lock();	// Mutex Memory Locked ****************
 			for(int i = 0;i < NUM_OF_FRAMES;i++){ // If its not in memory, loop to find empty page.
 				if(Main_Memory[i] == -1){
 					Main_Memory[i] = it->GetPageTable(it->GetPageNum(),0);
@@ -103,6 +112,7 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 				Main_Memory[full_mem_count] = it->GetPageTable(it->GetPageNum(),0);
 				full_mem_count += 1;
 			}
+			mtx.unlock();	// Mutex Memory Locked ****************
 		}
 		it->SetState(Process::Running);
 		mtx.lock();	// Mutex Print Locked ****************
@@ -127,8 +137,14 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
 		}	
 		if(it->GetInstructionType() == 3)	// Checks if Critical Section
 		{
-			if(critical == false){critical = true;}
-			else{critical = false;}
+			if(critical == false){
+				critical = true;
+				mtx.lock();	// Mutex Critical Section Locked ****************
+			}
+			else{
+				critical = false;
+				mtx.unlock();	// Mutex Critical Section Locked ****************
+			}
 			it->decrement_cycle();
 			break;
 		}
@@ -203,6 +219,8 @@ void Scheduler::ShortestFirst(vector<Process>& PCB){
     return;
 }
 
+// Round Robin scheduler, moved from main.cpp into its own method.
+// Works the same way as done in part 2, execpt now with Mutex's
 void Scheduler::RoundRobin(vector<Process>& PCB){
 	std::thread::id empty_id;
     vector<Process>::iterator it = PCB.begin();
@@ -224,6 +242,7 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 
 
 			case Process::New:	// Default state, Gets set to ready when running for the first time
+				mtx.lock();	// Mutex Memory Locked ****************
 				for(int i = 0; i < it->GetNumOfInstr(); i++){	// checks based on the number of instructions by
 					for(int j = 0; j < NUM_OF_FRAMES; j++){		// looping through Memory to see if an open spot.
 						if(Virtual_Memory[j] == -1){			// If yes, place in process number and set process to ready.
@@ -238,6 +257,7 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 						}
 					}	
 				}
+				mtx.unlock();	// Mutex Memory Locked ****************
 
 				if(enough_memory){	// If there is enough virtual memory space, Set process to Ready.
 					it->SetState(Process::Ready);
@@ -266,6 +286,7 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 					}
 				}
 				if(it->GetInMem() == false){ 
+					mtx.lock();	// Mutex Memory Locked ****************
 					for(int i = 0;i < NUM_OF_FRAMES;i++){ // If its not in memory, loop to find empty page.
 						if(Main_Memory[i] == -1){
 							Main_Memory[i] = it->GetPageTable(it->GetPageNum(),0);
@@ -280,6 +301,7 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 						Main_Memory[full_mem_count] = it->GetPageTable(it->GetPageNum(),0);
 						full_mem_count += 1;
 					}
+					mtx.unlock();	// Mutex Memory Locked ****************
 				}
 				it->SetState(Process::Running);
 				mtx.lock();	// Mutex Print Locked ****************
@@ -309,8 +331,14 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 				
 				if(it->GetInstructionType() == 3)	// Checks if Critical Section
 				{
-					if(critical == false){critical = true;}
-					else{critical = false;}
+					if(critical == false){
+						critical = true;
+						mtx.lock();	// Mutex Critical Section Locked ****************
+						}
+					else{
+						critical = false;
+						mtx.unlock();	// Mutex Critical Section Locked ****************
+						}
 					it->decrement_cycle();
 					break;
 				}
@@ -417,20 +445,3 @@ void Scheduler::RoundRobin(vector<Process>& PCB){
 
 
 
-
-
-
-
-void Scheduler::threadprint(vector<Process>& PCB){
-	mtx.lock();
-
-	std::thread::id compare_id;
-	for (vector<Process>::iterator it = PCB.begin(); it != PCB.end(); ++it){
-		cout << it->GetName() << " - " << it->GetThreadId() << endl;
-		it->SetThreadId(std::this_thread::get_id());
-		cout << it->GetName() << " - " << it->GetThreadId() << endl;
-	}
-
-	mtx.unlock();
-    return;
-}

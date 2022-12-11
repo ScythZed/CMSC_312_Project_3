@@ -16,10 +16,10 @@ extern int MM_print;
 
 class Scheduler{
     protected:
-        int scheduling_type;
-        int quantum;
-        int rr_count;
-        static std::mutex mtx;
+        int scheduling_type;    // RR or SF
+        int quantum;    // Set by default to 5 in construtor
+        int rr_count;   // Interated apon within RR scheduler
+        static std::mutex mtx;  // Global Mutex accross threads
 
     public:
         Scheduler();    // Default Construtor
@@ -27,5 +27,4 @@ class Scheduler{
         void ShortestFirst(std::vector<Process>& PCB); // Shortest First
         void RoundRobin(std::vector<Process>& PCB);  // Round Robin
 
-        void threadprint(std::vector<Process>& PCB);
     };
